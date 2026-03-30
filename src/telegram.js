@@ -20,12 +20,17 @@ export async function setWebhook() {
 }
 
 export async function sendMessage(chatId, text, extra = {}) {
-  await api.post('/sendMessage', {
+  const payload = {
     chat_id: chatId,
     text,
-    parse_mode: 'Markdown',
     ...extra,
-  });
+  };
+
+  if (!extra.parse_mode) {
+    delete payload.parse_mode;
+  }
+
+  await api.post('/sendMessage', payload);
 }
 
 export async function sendTyping(chatId) {
