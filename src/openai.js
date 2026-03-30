@@ -1,8 +1,12 @@
-import OpenAI from 'openai';
-import { config } from './config.js';
+import OpenAI from "openai";
 
-export const openai = new OpenAI({
-  apiKey: config.openAiApiKey,
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+  defaultHeaders: {
+    "HTTP-Referer": process.env.BASE_URL || "",
+    "X-Title": "agency-exec-ai-bot"
+  }
 });
 
 export async function askAssistant({ systemPrompt, userPrompt }) {
