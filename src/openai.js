@@ -1,20 +1,37 @@
 import OpenAI from "openai";
+import { config } from "./config.js";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+const openai = new OpenAI({
+  apiKey: config.openaiApiKey,
+  baseURL: config.openaiBaseUrl || "https://api.openai.com/v1",
   defaultHeaders: {
-    "HTTP-Referer": process.env.BASE_URL || "",
+    "HTTP-Referer": config.baseUrl || "",
     "X-Title": "agency-exec-ai-bot"
   }
 });
 
-export async function askAssistant({ systemPrompt, userPrompt }) {
+export async function askAssistant({
+  systemPrompt,
+  userMessage,
+  contextText = ""
+}) {
+  const input = [
+    {
+      role: "system",
+      content: systemPrompt
+    },
+    {
+      role: "user",
+      content: contextText
+        ? `${userMessage}\n\nКонтекст из документов:\n${contextText}`
+        : userMessage
+    }
+  ];
+
   const response = await openai.responses.create({
-    model: config.openAiModel,
-    instructions: systemPrompt,
-    input: userPrompt,
+    model: config.openaiModel,
+    input
   });
 
-  return response.output_text?.trim() || 'Не удалось получить ответ от модели.';
+  return response.output_text || "Не удалось получить ответ от модели.";
 }
