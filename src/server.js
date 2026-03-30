@@ -52,7 +52,7 @@ async function handleUpdate(update) {
         '/reset — очистить историю и загруженные файлы',
         '/files — показать список загруженных файлов',
         '/media — режим анализа медиаплана',
-      ].join('\n'),
+      ].join('\n')
     );
     return;
   }
@@ -70,7 +70,7 @@ async function handleUpdate(update) {
         '- Что слабое место в КП?',
         '- Какие вопросы задать клиенту по брифу?',
         '- Что нужно проверить в договоре?',
-      ].join('\n'),
+      ].join('\n')
     );
     return;
   }
@@ -78,7 +78,7 @@ async function handleUpdate(update) {
   if (message.text?.startsWith('/media')) {
     await sendMessage(
       chatId,
-      'Загрузите медиаплан, budget-файл или performance-таблицу, а затем задайте вопрос: например, “Проанализируй риски”, “Что улучшить?”, “Какие выводы для руководителя?”',
+      'Загрузите медиаплан, budget-файл или performance-таблицу, а затем задайте вопрос: например, “Проанализируй риски”, “Что улучшить?”, “Какие выводы для руководителя?”'
     );
     return;
   }
@@ -114,7 +114,12 @@ async function handleDocumentMessage(chatId, message) {
   const originalName = document.file_name || 'document.bin';
 
   await sendTyping(chatId);
-  await sendMessage(chatId, `Принял файл *${escapeMarkdown(originalName)}*. Начинаю анализ.`);
+
+  await sendMessage(
+    chatId,
+    `Принял файл *${escapeMarkdown(originalName)}*. Начинаю анализ.`,
+    { parse_mode: 'Markdown' }
+  );
 
   const filePath = await downloadTelegramFile(document.file_id, originalName);
   const extractedText = await extractTextFromFile(filePath, originalName);
@@ -122,7 +127,7 @@ async function handleDocumentMessage(chatId, message) {
   if (!extractedText || extractedText.length < 20) {
     await sendMessage(
       chatId,
-      'Не удалось извлечь достаточно текста из файла. Попробуйте другой документ или текстовый формат.',
+      'Не удалось извлечь достаточно текста из файла. Попробуйте другой документ или текстовый формат.'
     );
     return;
   }
@@ -153,6 +158,7 @@ async function handleDocumentMessage(chatId, message) {
       '- Что не хватает в этом брифе?',
       '- Как усилить это коммерческое предложение?',
     ].join('\n'),
+    { parse_mode: 'Markdown' }
   );
 }
 
