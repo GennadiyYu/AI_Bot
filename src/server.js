@@ -4,7 +4,7 @@ import { addDocument, appendHistory, getChat, resetChat } from './storage.js';
 import { downloadTelegramFile, sendMessage, sendTyping, setWebhook } from './telegram.js';
 import { extractTextFromFile, chunkText, summarizeDocument } from './file-parsers.js';
 import { getRelevantChunks } from './retrieval.js';
-import { EXEC_ASSISTANT_PROMPT, buildUserPrompt } from './prompts.js';
+import { buildUserPrompt, resolveSystemPrompt } from './prompts.js';
 import { askAssistant } from './openai.js';
 
 const app = express();
@@ -44,12 +44,14 @@ async function handleUpdate(update) {
         'Что умею:',
         '- давать рекомендации по управлению, продажам, клиентам и команде;',
         '- анализировать PDF, DOCX, XLSX, CSV, TXT и отвечать по ним;',
+        '- распознавать тип документа: медиаплан, отчёт, КП, бриф, договор;',
         '- помогать собирать выводы, риски и план действий.',
         '',
         'Команды:',
         '/help — подсказка',
         '/reset — очистить историю и загруженные файлы',
         '/files — показать список загруженных файлов',
+        '/media — режим анализа медиаплана',
       ].join('\n'),
     );
     return;
@@ -58,7 +60,25 @@ async function handleUpdate(update) {
   if (message.text?.startsWith('/help')) {
     await sendMessage(
       chatId,
-      'Просто отправьте вопрос или загрузите файл. После загрузки можно спрашивать, например: “Сделай summary”, “Какие риски ты видишь?”, “Сравни это с предыдущим документом”, “Что уточнить у команды?”.',
+      [
+        'Отправьте вопрос или загрузите файл.',
+        '',
+        'После загрузки можно спрашивать, например:',
+        '- Сделай summary',
+        '- Какие риски ты видишь?',
+        '- Это хороший медиаплан?',
+        '- Что слабое место в КП?',
+        '- Какие вопросы задать клиенту по брифу?',
+        '- Что нужно проверить в договоре?',
+      ].join('\n'),
+    );
+    return;
+  }
+
+  if (message.text?.startsWith('/media')) {
+    await sendMessage(
+      chatId,
+      'Загрузите медиаплан, budget-файл или performance-таблицу, а затем задайте вопрос: например, “Проанализируй риски”, “Что улучшить?”, “Какие выводы для руководителя?”',
     );
     return;
   }
@@ -128,6 +148,10 @@ async function handleDocumentMessage(chatId, message) {
       '- Что здесь слабое место?',
       '- Какие вопросы нужно задать команде?',
       '- Подготовь рекомендации для руководителя',
+      '- Это хороший медиаплан?',
+      '- Какие риски в этом договоре?',
+      '- Что не хватает в этом брифе?',
+      '- Как усилить это коммерческое предложение?',
     ].join('\n'),
   );
 }
@@ -144,10 +168,16 @@ async function handleTextMessage(chatId, text) {
     recentHistory: (chat.history || []).slice(-10),
   });
 
+  const systemPrompt = resolveSystemPrompt({
+    question: text,
+    retrievedContext: relevantChunks,
+    fileNames: (chat.documents || []).map((doc) => doc.fileName),
+  });
+
   appendHistory(chatId, 'user', text);
 
   const answer = await askAssistant({
-    systemPrompt: EXEC_ASSISTANT_PROMPT,
+    systemPrompt,
     userMessage: userPrompt,
   });
 
