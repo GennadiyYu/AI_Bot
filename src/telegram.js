@@ -45,9 +45,17 @@ export async function getFileLink(fileId) {
 export async function downloadTelegramFile(fileId, originalName = 'file.bin') {
   const url = await getFileLink(fileId);
   const safeName = `${Date.now()}-${originalName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-  const targetPath = path.resolve('tmp/uploads', safeName);
 
-  const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000 });
+  const uploadsDir = path.resolve('tmp/uploads');
+  fs.mkdirSync(uploadsDir, { recursive: true });
+
+  const targetPath = path.join(uploadsDir, safeName);
+
+  const response = await axios.get(url, {
+    responseType: 'arraybuffer',
+    timeout: 60000,
+  });
+
   fs.writeFileSync(targetPath, response.data);
   return targetPath;
 }
