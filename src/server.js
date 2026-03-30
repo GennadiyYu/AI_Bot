@@ -1,5 +1,4 @@
 import express from 'express';
-import path from 'path';
 import { config } from './config.js';
 import { addDocument, appendHistory, getChat, resetChat } from './storage.js';
 import { downloadTelegramFile, sendMessage, sendTyping, setWebhook } from './telegram.js';
@@ -101,7 +100,10 @@ async function handleDocumentMessage(chatId, message) {
   const extractedText = await extractTextFromFile(filePath, originalName);
 
   if (!extractedText || extractedText.length < 20) {
-    await sendMessage(chatId, 'Не удалось извлечь достаточно текста из файла. Попробуйте другой документ или текстовый формат.');
+    await sendMessage(
+      chatId,
+      'Не удалось извлечь достаточно текста из файла. Попробуйте другой документ или текстовый формат.',
+    );
     return;
   }
 
@@ -143,10 +145,12 @@ async function handleTextMessage(chatId, text) {
   });
 
   appendHistory(chatId, 'user', text);
+
   const answer = await askAssistant({
     systemPrompt: EXEC_ASSISTANT_PROMPT,
-    userPrompt,
+    userMessage: userPrompt,
   });
+
   appendHistory(chatId, 'assistant', answer);
 
   await sendMessage(chatId, escapeLongMessage(answer));
