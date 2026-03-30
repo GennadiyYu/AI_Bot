@@ -35,5 +35,3 @@ export async function askAssistant({
 
   return response.output_text || "Не удалось получить ответ от модели.";
 }
-  return response.output_text || "Не удалось получить ответ от модели.";
-}
