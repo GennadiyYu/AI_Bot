@@ -3,35 +3,37 @@ import { config } from "./config.js";
 
 const openai = new OpenAI({
   apiKey: config.openaiApiKey,
-  baseURL: config.openaiBaseUrl || "https://api.openai.com/v1",
+  baseURL: config.openaiBaseUrl,
   defaultHeaders: {
     "HTTP-Referer": config.baseUrl || "",
-    "X-Title": "agency-exec-ai-bot"
-  }
+    "X-Title": "agency-exec-ai-bot",
+  },
 });
 
 export async function askAssistant({
   systemPrompt,
   userMessage,
-  contextText = ""
+  contextText = "",
 }) {
   const input = [
     {
       role: "system",
-      content: systemPrompt
+      content: systemPrompt,
     },
     {
       role: "user",
       content: contextText
         ? `${userMessage}\n\nКонтекст из документов:\n${contextText}`
-        : userMessage
-    }
+        : userMessage,
+    },
   ];
 
   const response = await openai.responses.create({
     model: config.openaiModel,
-    input
+    input,
   });
 
+  return response.output_text || "Не удалось получить ответ от модели.";
+}
   return response.output_text || "Не удалось получить ответ от модели.";
 }
